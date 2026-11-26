@@ -77,17 +77,12 @@ install_app() {
   ln -sf "$APPIMAGE" "$LINK"
 
   say "Preparando el icono y el acceso directo"
-  (cd "$tmp" && "$APPIMAGE" --appimage-extract '*.png' >/dev/null 2>&1) || true
-  found=""
-  if [ -d "$tmp/squashfs-root" ]; then
-    found="$(find "$tmp/squashfs-root" -maxdepth 1 -name '*.png' 2>/dev/null | head -n 1 || true)"
-    if [ -z "$found" ]; then
-      found="$(find "$tmp/squashfs-root" -path '*512x512*' -name '*.png' 2>/dev/null | head -n 1 || true)"
-    fi
-  fi
+  mkdir -p "$tmp/a" "$tmp/b"
+  (cd "$tmp/a" && "$APPIMAGE" --appimage-extract 'usr/share/icons/hicolor/*/apps/*.png' >/dev/null 2>&1) || true
+  (cd "$tmp/b" && "$APPIMAGE" --appimage-extract '*.png' >/dev/null 2>&1) || true
+  found="$(find "$tmp/a" "$tmp/b" -type f -name '*.png' -printf '%s %p\n' 2>/dev/null | sort -rn | head -n 1 | cut -d' ' -f2- || true)"
   icon_name="application-x-executable"
-  if [ -n "$found" ]; then
-    cp -f "$found" "$ICON"
+  if [ -n "$found" ] && cp -f "$found" "$ICON" 2>/dev/null; then
     icon_name="rec-studio"
   fi
 
